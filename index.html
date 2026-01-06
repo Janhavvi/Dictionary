@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Dictionary</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Changed font to Audiowide for a modern look -->
     <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Background will be handled by CSS -->
     <div class="container">
         <h1>Dictionary</h1>
         <div class="search-container">
@@ -17,9 +15,31 @@
             <button id="search-btn" disabled>Search</button>
         </div>
 
-        <div id="results-container">
-            <!-- Results will be dynamically injected here -->
+        <!-- Tabs are now always visible, but will be disabled initially -->
+        <div id="tabs-container" class="tabs-container is-disabled">
+            <div class="tab active" data-tab="pronunciation">Pronunciation</div>
+            <div class="tab" data-tab="synonyms">Synonyms</div>
+            <div class="tab" data-tab="antonyms">Antonyms</div>
         </div>
+
+        <!-- This area will be controlled by the tabs -->
+        <div id="content-area">
+            <!-- Flipper container for animation -->
+            <div id="results-flipper" class="flipper-container">
+                <div class="flipper">
+                    <div id="results-front" class="flipper-front"></div>
+                    <div id="results-back" class="flipper-back"></div>
+                </div>
+            </div>
+
+            <!-- A container for the initial state message -->
+            <div id="initial-state-container">
+                 <div class="result-card">
+                    <p>Search for a word to see the definition, pronunciation, and more!</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="main.js"></script>
