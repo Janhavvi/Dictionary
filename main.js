@@ -2,21 +2,19 @@ const wordInput = document.getElementById('word-input');
 const searchBtn = document.getElementById('search-btn');
 const resultsContainer = document.getElementById('results-container');
 
+wordInput.addEventListener('input', () => {
+    searchBtn.disabled = wordInput.value.trim() === '';
+});
+
 searchBtn.addEventListener('click', searchWord);
 wordInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !searchBtn.disabled) {
         searchWord();
     }
 });
 
 function searchWord() {
     const word = wordInput.value.trim();
-
-    if (word === '') {
-        displayError('Please enter a word to search.');
-        return;
-    }
-
     fetchWordData(word);
 }
 
@@ -28,9 +26,9 @@ async function fetchWordData(word) {
         
         if (!response.ok) {
             if (response.status === 404) {
-                displayError('Word not found. Please try another word.');
+                displayError('Word not found. Please check your spelling or try another word.');
             } else {
-                displayError('An error occurred. Please try again later.');
+                displayError('Something went wrong. Please try again later.');
             }
             return;
         }
@@ -39,64 +37,68 @@ async function fetchWordData(word) {
         displayResults(data[0]);
 
     } catch (error) {
-        displayError('A network error occurred. Please check your connection.');
+        displayError('A network error occurred. Please check your internet connection.');
     }
 }
 
 function displayResults(wordData) {
     resultsContainer.innerHTML = '';
 
-    const result = document.createElement('div');
-    result.classList.add('result');
+    const resultCard = document.createElement('div');
+    resultCard.classList.add('result-card');
 
-    const word = document.createElement('h2');
-    word.textContent = wordData.word;
-    result.appendChild(word);
+    const phoneticText = wordData.phonetic || (wordData.phonetics.find(p => p.text) || {}).text || '';
+    const audioData = wordData.phonetics.find(p => p.audio);
 
-    if (wordData.phonetic) {
-        const phonetic = document.createElement('p');
-        phonetic.classList.add('phonetic');
-        phonetic.textContent = wordData.phonetic;
-        result.appendChild(phonetic);
+    let audioBtnHTML = '';
+    if (audioData && audioData.audio) {
+        audioBtnHTML = `
+            <button id="audio-btn" onclick="playAudio('${audioData.audio}')">
+                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+            </button>
+        `;
     }
+
+    resultCard.innerHTML = `
+        <div class="word-section">
+            <div>
+                <h2 class="word-title">${wordData.word}</h2>
+                <p class="phonetic">${phoneticText}</p>
+            </div>
+            ${audioBtnHTML}
+        </div>
+    `;
 
     wordData.meanings.forEach(meaning => {
-        const partOfSpeech = document.createElement('p');
-        partOfSpeech.textContent = `Part of Speech: ${meaning.partOfSpeech}`;
-        result.appendChild(partOfSpeech);
+        const meaningSection = document.createElement('div');
+        meaningSection.classList.add('meaning-section');
 
-        meaning.definitions.forEach(definition => {
-            const definitionText = document.createElement('p');
-            definitionText.textContent = `Definition: ${definition.definition}`;
-            result.appendChild(definitionText);
-
-            if (definition.example) {
-                const example = document.createElement('p');
-                example.textContent = `Example: ${definition.example}`;
-                result.appendChild(example);
-            } else {
-                const example = document.createElement('p');
-                example.textContent = 'Example not available';
-                result.appendChild(example);
-            }
+        let definitionsHTML = '';
+        meaning.definitions.forEach(def => {
+            const exampleHTML = def.example ? `<p class="example">"${def.example}"</p>` : '';
+            definitionsHTML += `
+                <div class="definition">
+                    <p>${def.definition}</p>
+                    ${exampleHTML}
+                </div>
+            `;
         });
+
+        meaningSection.innerHTML = `
+            <div class="part-of-speech">${meaning.partOfSpeech}</div>
+            ${definitionsHTML}
+        `;
+        resultCard.appendChild(meaningSection);
     });
 
-    const audio = wordData.phonetics.find(phonetic => phonetic.audio);
-    if (audio) {
-        const audioBtn = document.createElement('button');
-        audioBtn.id = 'audio-btn';
-        audioBtn.textContent = 'Play Audio';
-        audioBtn.addEventListener('click', () => {
-            const audioPlayer = new Audio(audio.audio);
-            audioPlayer.play();
-        });
-        result.appendChild(audioBtn);
-    }
+    resultsContainer.appendChild(resultCard);
+}
 
-    resultsContainer.appendChild(result);
+function playAudio(audioSrc) {
+    const audio = new Audio(audioSrc);
+    audio.play();
 }
 
 function displayError(message) {
-    resultsContainer.innerHTML = `<p class="error">${message}</p>`;
+    resultsContainer.innerHTML = `<div class="error-card">${message}</div>`;
 }
